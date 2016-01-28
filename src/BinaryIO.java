@@ -55,83 +55,45 @@ import java.io.InputStreamReader;
 public class BinaryIO {
 	
 	private final static String origFilepath = "./spmcat.dat";		//the path of the original input file to be read
-	private final static String binaryFilepath  = "./binaryspmcat.bin";		//the path of the file we want to create
+	private final static String binaryFilepath  = "./binaryspmcat.txt";		//the path of the file we want to create
 	private BufferedReader buffer;		// our input buffer
-	private int lineCount = 0;
+	private int totalReadLineCount = 0;
 	private Index index;
+	//Error counts used for error reporting to user.
+	public int readErrorCount = 0;	
+	public int otherErrorCount = 0;
 	
-	public BinaryIO() {
-		//open the file
-		try {
-			buffer = new BufferedReader(new FileReader(origFilepath));
-		} catch(FileNotFoundException e) {
-			e.printStackTrace();
+	public BinaryIO(String readPath) {
+		index = new Index(readPath);
+		if(readErrorCount == 0) {
+			index.writeBinaryFile(binaryFilepath);
+		} else {
+			System.out.println("Encountered " + readErrorCount + " on read. Stopping...");
 		}
-		index = new Index();
-		readAndParse();
-		createBinary();
-		closeAndReopen();
-		
 	}
+
 	
-	
-
-
-	/**
-	 * @return void
-	 * @param none
-	 * Closes the BufferedReader upon completion of parsing.
-	 * Then, reopens in preparation for access.
-	 */
-	private void closeAndReopen() {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-
-
-	/**
-	 * @return void
-	 * @param none
-	 * Creates the sorted binary file output
-	 */
-	private void createBinary() {
-		
-		
-	}
-
-
-
-
-	/**
-	 * @return void
-	 * @param none
-	 * Reads in the file that is opened in the constructor
-	 */
-	private void readAndParse() {
-		// TODO Auto-generated method stub
-		
-	}
 	
 	/**
 	 * @return void
 	 * @param query string of Object ID to find in binary file
-	 * Finds a record in the Binary File and prints it directly.
+	 * Finds a record in the Binary File and returns it.
 	 */
-	public void find(String query) {
-		
-		
-		
+	public String find(String query) {
+		return index.find(query);
 	}
 
 
 
 	public static void main(String[] args) {
-		
+		if(args[0].length() == 0) {
+			System.out.println("You must supply a filepath as a command line argument. Exit status 1");
+			System.exit(1);
+		}
 		String readInput = "";
 		BufferedReader br;
-		BinaryIO bin = new BinaryIO();
+		
+		BinaryIO bin = new BinaryIO(args[0]);
 		
 		//loop to take in user-supplied arguments & find.
 		while(true) {
@@ -144,7 +106,7 @@ public class BinaryIO {
 			}
 			if(readInput.compareTo("q") == 0)
 				break;
-			bin.find(readInput);
+			System.out.println(bin.find(readInput));
 		}
 		
 		try {

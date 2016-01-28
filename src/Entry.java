@@ -1,15 +1,35 @@
+import java.nio.ByteBuffer;
+
 /**
  * 
  * @author Aaron Raymer
  * @class Entry represents a single entry (one complete line) in the index.
- * @method toString returns a stringified version of the Entry (the complete line)
- * @variables { public: fields - the field values read for the line }
  */
+
+//NOTE TO MYSELF: See if you can split string array normally, and then check lengths. 
+
 public class Entry implements Comparable<Entry> {
-	public Field[] fields = new Field[27];
+	public Field[] fields = new Field[27]; // this is the index data.
+	
+	public byte[] bytes;
+	public int objectId = 0;
+	
 	
 	public Entry(String line) {
-		splitLineAndStore(line);
+//		splitLineAndStore(line);
+		readBytes(line);
+	}
+	
+	/**
+	 * 
+	 */
+	private void readBytes(String line) {
+		bytes = line.getBytes();
+		byte[] temp = new byte[8];
+		for(int i = 0; i<8; i++) {
+			temp[i] = bytes[i];
+		}
+		objectId = ByteBuffer.wrap(temp).getInt();
 	}
 	
 	/**
@@ -64,18 +84,18 @@ public class Entry implements Comparable<Entry> {
 		return result;
 	}
 	
-	/**
-	 * toString()
-	 */
-	public String toString() {
-		String result = "";
-		result = "" + fields[0].getValue();
-		for(int i = 1; i<27; i++) {
-			if( !(fields[i] == null) ) 
-				result+=" " + fields[i].getValue();
-		}
-		return result;
-	}
+//	/**
+//	 * toString()
+//	 */
+//	public String toString() {
+//		String result = "";
+//		result = "" + fields[0].getValue();
+//		for(int i = 1; i<27; i++) {
+//			if( !(fields[i] == null) ) 
+//				result+=" " + fields[i].getValue();
+//		}
+//		return result;
+//	}
 	
 	/**
 	 * This overridden method assumes that the ObjectID field is present and first
@@ -83,8 +103,8 @@ public class Entry implements Comparable<Entry> {
 	 */
 	@Override
 	public int compareTo(Entry o) {
-		Integer a = (Integer) this.fields[0].getValue();
-		Integer b = (Integer) o.fields[0].getValue();
+		Integer a = (Integer) this.objectId;
+		Integer b = (Integer) o.objectId;
 		return (a-b);
 	}
 
