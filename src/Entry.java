@@ -1,4 +1,4 @@
-import java.nio.ByteBuffer;
+import java.util.LinkedList;
 
 /**
  * 
@@ -6,49 +6,59 @@ import java.nio.ByteBuffer;
  * @class Entry represents a single entry (one complete line) in the index.
  */
 
-//NOTE TO MYSELF: See if you can split string array normally, and then check lengths. 
-
-public class Entry implements Comparable<Entry> {
+public class Entry implements Comparable {
 	public Field[] fields = new Field[27]; // this is the index data.
 	
 	public byte[] bytes;
 	public int objectId = 0;
+	private Width[] widths;
 	
 	
-	public Entry(String line) {
-//		splitLineAndStore(line);
-		readBytes(line);
-	}
-	
-	/**
-	 * 
-	 */
-	private void readBytes(String line) {
-		bytes = line.getBytes();
-		byte[] temp = new byte[8];
-		for(int i = 0; i<8; i++) {
-			temp[i] = bytes[i];
-		}
-		objectId = ByteBuffer.wrap(temp).getInt();
+	public Entry(String line, Width[] w) {
+		widths = w;
+		splitLineAndStore(line);
 	}
 	
 	/**
 	 * 
 	 * @param line the string representing a single record to be split and stored
+	 * Takes in the entire entry as a string and splits it into substrings for storage.
 	 */
 	private void splitLineAndStore(String line) {
-		String[] strFields = line.replaceAll(" +", " ").trim().split(" ");	//Strip consecutive spaces and split
-		strFields = stripSpaces(strFields);		//Still getting whitespace for some reason. This guarantees we don't get it.
+		LinkedList<String> str = new LinkedList<String>();
+		String temp;
+		
+		//Split the string into substrings based on the byte information in the readme.
+		//Add into interim linkedlist
+		for(int i = 0; i<widths.length; i++) {
+			if(widths[i].start > line.length()) {
+				break;
+			} else if(widths[i].stop >= line.length()) {
+				temp = line.substring(widths[i].start);
+			} else {
+				temp = line.substring(widths[i].start-1, widths[i].stop);
+			}
+			str.push(temp);
+			temp = null;
+		}
+		LinkedList<String> reversed = new LinkedList<String>();
+		for(String s : str) {
+			reversed.push(s);
+		}
+		str = reversed;
+		
 		Double tempFloat = null;
 		Integer tempInteger = null;
-		for(int i = 0; i<fields.length; i++) {
-			if(strFields[i] == null)
+		
+		//divvy up the strings into fields.
+		for(int i = 0; i<str.size(); i++) {
+			if(str.get(i) == null)
 				continue;
-			if(isAlpha(strFields[i])) { //If we don't match digits we know it's alpha
-				fields[i] = new Field(strFields[i]);
+			if(isAlpha(str.get(i))) { //If we don't match digits we know it's alpha
+				fields[i] = new Field(str.get(i));
 				continue;
 			}	
-			tempFloat = Double.parseDouble(strFields[i]);
+			tempFloat = Double.parseDouble(str.get(i));
 			if(Math.ceil(tempFloat) == tempFloat) {	//If the ceiling is the same number, it's an int. Use autoboxing to make Integer
 				tempInteger = (int) (tempFloat/1);
 				fields[i] = new Field(tempInteger);
@@ -56,6 +66,7 @@ public class Entry implements Comparable<Entry> {
 				fields[i] = new Field(tempFloat);
 			}
 		}
+		objectId = (int) fields[0].getValue();
 	}
 
 	/**
@@ -63,50 +74,38 @@ public class Entry implements Comparable<Entry> {
 	 * @return if no numeric digits exist, return true. Otherwise, false.
 	 */
 	private boolean isAlpha(String string) {
-		
+		if(string == null)
+			return false;
 		return !string.matches("[0-9]+");
 		
 	}
 
+	
 	/**
-	 * @param strFields Array of strings which will be stripped
-	 * @return array of strings with all elements that were only whitespace
-	 * removed.
+	 * toString()
 	 */
-	private String[] stripSpaces(String[] strFields) {
-		String[] result = new String[27];
-		int count = 0;
-		for(int i = 0; i<strFields.length; i++) {
-			if(strFields[i].trim().compareTo("") == 0)
-				continue;
-			result[count++] = strFields[i];
+	public String toString() {
+		String result = "";
+		result = "" + fields[0].getValue();
+		for(int i = 1; i<27; i++) {
+			if( !(fields[i] == null) ) 
+				result+= ", " + fields[i].getValue();
 		}
 		return result;
 	}
-	
-//	/**
-//	 * toString()
-//	 */
-//	public String toString() {
-//		String result = "";
-//		result = "" + fields[0].getValue();
-//		for(int i = 1; i<27; i++) {
-//			if( !(fields[i] == null) ) 
-//				result+=" " + fields[i].getValue();
-//		}
-//		return result;
-//	}
 	
 	/**
 	 * This overridden method assumes that the ObjectID field is present and first
 	 * in both objects.
 	 */
 	@Override
-	public int compareTo(Entry o) {
-		Integer a = (Integer) this.objectId;
-		Integer b = (Integer) o.objectId;
+	public int compareTo(Object o) {
+		Integer a = (Integer) this.fields[0].getValue();
+		Integer b = (Integer) ((Entry)o).fields[0].getValue();
 		return (a-b);
 	}
+
+
 
 	
 }

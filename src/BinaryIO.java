@@ -56,20 +56,13 @@ public class BinaryIO {
 	
 	private final static String origFilepath = "./spmcat.dat";		//the path of the original input file to be read
 	private final static String binaryFilepath  = "./binaryspmcat.txt";		//the path of the file we want to create
-	private BufferedReader buffer;		// our input buffer
-	private int totalReadLineCount = 0;
-	private Index index;
-	//Error counts used for error reporting to user.
-	public int readErrorCount = 0;	
-	public int otherErrorCount = 0;
+	private Index index;	//Our index, everything is there. This class is a controller (so we don't clutter our main class)
+
 	
 	public BinaryIO(String readPath) {
 		index = new Index(readPath);
-		if(readErrorCount == 0) {
-			index.writeBinaryFile(binaryFilepath);
-		} else {
-			System.out.println("Encountered " + readErrorCount + " on read. Stopping...");
-		}
+		index.writeBinaryFile(binaryFilepath);
+		index.prepareToReadBinary(binaryFilepath);
 	}
 
 	

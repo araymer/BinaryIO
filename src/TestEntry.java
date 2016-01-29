@@ -14,7 +14,7 @@ public class TestEntry {
 	@Test
 	public void testEntryWithTrim() {
 		String str = "  26301173  0  0  0.095 -45 57 15.35   0.000396 -45.954263 104  77   -19.2    -4.2  7.7  7.7 16.74 18.28  1.54 39 22   1  1  1  G  ";
-		Entry test = new Entry(str);
+		Entry test = new Entry(str, null);
 		assertFalse(test == null);
 		System.out.println(test);
 		assertEquals(test.toString(), "26301173 0 0 0.095 -45 57 15.35 0.000396 -45.954263 104 77 -19.2 -4.2 7.7 7.7 16.74 18.28 1.54 39 22 1 1 1 G" );
