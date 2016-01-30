@@ -1,8 +1,6 @@
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -16,7 +14,7 @@ import java.util.TreeMap;
  */
 public class Index {
 	private TreeMap<Integer, Entry> index;
-	private DataOutputStream bufferOut;
+	private RandomAccessFile bufferOut;
 	private BufferedReader bufferIn;
 	private String filepath;
 	private String outpath;
@@ -24,12 +22,13 @@ public class Index {
 	private Width[] widths;
 	private int entryCount = 0;
 	
+
 	public Index(String path) {
 		index = new TreeMap<Integer, Entry>();
 		widths = new Width[27];
 		setWidths();
 		readAndParse(path);
-		
+				
 	}
 	
 	
@@ -78,6 +77,8 @@ public class Index {
 		try {
 			access = new RandomAccessFile(new File(path), "r");
 			System.out.println("File sorted: " + verifyOrder());
+//			access.seek(0);
+			System.out.println(access.readInt());
 
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -139,7 +140,7 @@ public class Index {
 	 */
 	public void writeBinaryFile(String path) {
 		try {
-			bufferOut = new DataOutputStream(new FileOutputStream(path));
+			bufferOut = new RandomAccessFile(new File(path), "rw");
 			outpath = path;
 			//start writing our index.
 			for(Entry e : index.values()) {
@@ -148,9 +149,15 @@ public class Index {
 					//This will make conversion easier (but less efficient)
 					if(field == null || field.getValue() == null)
 						continue;
-					bufferOut.writeBytes( (field.getValue() + "" ));
+					if(field.fieldWidth == 4)
+						bufferOut.writeInt((Integer) field.getValue());
+					if(field.fieldWidth == 8)
+						bufferOut.writeDouble((Double) field.getValue());
+					if( field.charFlag )
+						bufferOut.writeByte((char) field.getValue());
+//					bufferOut.writeByte(',');
+					
 				}
-//				bufferOut.write(e.bytes);
 			}
 			
 			bufferOut.close();
@@ -161,12 +168,35 @@ public class Index {
 			
 	}
 	
+	
+//	/**
+//	 * debugging ignore
+//	 */
+//	public void verifyWidths() {
+//		String temp;
+//		int line = 0;
+//		for(Entry e : index.values()) {
+//			line++;
+//			System.out.println("Line number" + line);
+//			e.checkBytes();
+//			System.out.println("\n\n");
+//		}
+//	}
+	/**
+	 * 
+	 * @return
+	 * @throws IOException
+	 * 
+	 * Debugging method, ignore.
+	 */
 	public boolean verifyOrder() throws IOException {
+		access.seek(0);
 		int last = access.readInt();
 		int current;
 
 		for(int i = 1; i<entryCount; i++) {
-			access.seek(i*128);
+			access.seek(0);
+			access.seek(i*140);
 			current = access.readInt();
 			System.out.println("Checking " + last + " < " + current );
 			if(current <= last) {

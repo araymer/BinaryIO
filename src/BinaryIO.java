@@ -60,9 +60,10 @@ public class BinaryIO {
 
 	
 	public BinaryIO(String readPath) {
-		index = new Index(readPath);
+        		index = new Index(readPath);
 		index.writeBinaryFile(binaryFilepath);
 		index.prepareToReadBinary(binaryFilepath);
+		
 	}
 
 	

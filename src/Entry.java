@@ -9,7 +9,6 @@ import java.util.LinkedList;
 public class Entry implements Comparable {
 	public Field[] fields = new Field[27]; // this is the index data.
 	
-	public byte[] bytes;
 	public int objectId = 0;
 	private Width[] widths;
 	
@@ -33,9 +32,9 @@ public class Entry implements Comparable {
 		for(int i = 0; i<widths.length; i++) {
 			if(widths[i].start > line.length()) {
 				break;
-			} else if(widths[i].stop >= line.length()) {
-				temp = line.substring(widths[i].start);
-			} else {
+			}/* else if(widths[i].stop > line.length()) {
+				temp = line.substring(widths[i].start-1);
+			} */else {
 				temp = line.substring(widths[i].start-1, widths[i].stop);
 			}
 			str.push(temp);
@@ -51,19 +50,52 @@ public class Entry implements Comparable {
 		Integer tempInteger = null;
 		
 		//divvy up the strings into fields.
-		for(int i = 0; i<str.size(); i++) {
+		for(int i = 0; i<27; i++) {
+			int size = 0;
+			switch(i) {
+				case 0:
+				case 1:
+				case 2:	
+				case 5:
+				case 6:
+				case 10:
+				case 11:
+				case 19:
+				case 20:
+				case 21:
+				case 22:
+				case 23: size = 4; break;
+				
+				case 3:
+				case 7:
+				case 8:
+				case 9:
+				case 12:
+				case 13:
+				case 14:
+				case 15:
+				case 16:
+				case 17:
+				case 18: size = 8; break;
+				
+				case 4:
+				case 24:
+				case 25:
+				case 26: size = 1; break;
+			}
+			
 			if(str.get(i) == null)
 				continue;
 			if(isAlpha(str.get(i))) { //If we don't match digits we know it's alpha
-				fields[i] = new Field(str.get(i));
+				fields[i] = new Field(str.get(i).charAt(0), size);
 				continue;
 			}	
 			tempFloat = Double.parseDouble(str.get(i));
 			if(Math.ceil(tempFloat) == tempFloat) {	//If the ceiling is the same number, it's an int. Use autoboxing to make Integer
 				tempInteger = (int) (tempFloat/1);
-				fields[i] = new Field(tempInteger);
+				fields[i] = new Field(tempInteger, size);
 			} else {	//Otherwise, it's a float.
-				fields[i] = new Field(tempFloat);
+				fields[i] = new Field(tempFloat, size);
 			}
 		}
 		objectId = (int) fields[0].getValue();
@@ -79,7 +111,20 @@ public class Entry implements Comparable {
 		return !string.matches("[0-9]+");
 		
 	}
-
+	
+	public void checkBytes() {
+		int bytecount= 0;
+		for(Field f : fields) {
+			if(f.getValue() instanceof java.lang.Integer) {
+				bytecount+=4;
+			} else if(f.getValue() instanceof java.lang.Double) {
+				bytecount+=8;
+			} else {
+				bytecount++;
+			}
+		}
+		System.out.println("byte count: " + bytecount);
+	}
 	
 	/**
 	 * toString()
@@ -89,7 +134,8 @@ public class Entry implements Comparable {
 		result = "" + fields[0].getValue();
 		for(int i = 1; i<27; i++) {
 			if( !(fields[i] == null) ) 
-				result+= ", " + fields[i].getValue();
+//				result+= ", " + fields[i].getValue();
+				result+=fields[i].toString() + ", ";
 		}
 		return result;
 	}
