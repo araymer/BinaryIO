@@ -231,12 +231,14 @@ public class Index {
 		leftKey = access.readInt();
 		access.seek(rightBound * 140);
 		rightKey = access.readInt();
+		//For some reason parentheses were giving me trouble. So I just split
+		// the offset calculation for the midpoint into separate operations.
 		offset = (target-leftKey);
 		offset /= (rightKey-leftKey);
 		offset *= (rightBound-leftBound) ;
-		midPoint = (int) ( leftBound + offset);
+		midPoint = (int) ( leftBound + offset); //Interpolation target index.
 		access.seek((int)midPoint * 140);
-		probe = access.readInt();
+		probe = access.readInt();	//ObjectId at midpoint.
 		
 		//Begin searching.
 		while(leftBound < rightBound) {
@@ -264,7 +266,7 @@ public class Index {
 		
 		if(success) {
 			access.seek((int)midPoint*140);
-			return readFields(midPoint*140);
+			return readFields(midPoint*140); //Reads and parses the fields into a readable string for output.
 		}
 		
 		
@@ -273,7 +275,7 @@ public class Index {
 	
 	/**
 	 * 
-	 * @param marker The offset to the beginning of the entry.
+	 * @param marker The offset to the beginning of the entry as required by the seek() method.
 	 * @return String of concatenated fields that have been translated from binary.
 	 * @throws IOException
 	 */
@@ -300,7 +302,7 @@ public class Index {
 				case 23:
 					tempInt = access.readInt();
 					currMarker+=4;
-					result+=tempInt + ", ";
+					result+=tempInt + ",";
 					access.seek(currMarker);
 					break;
 					
@@ -317,7 +319,7 @@ public class Index {
 				case 18: 
 					tempDbl = access.readDouble();
 					currMarker+=8;
-					result+=tempDbl + ", ";
+					result+=tempDbl + ",";
 					access.seek(currMarker);
 					break;
 				
@@ -327,19 +329,22 @@ public class Index {
 				case 26: 
 					tempChar = (char) access.readByte();
 					currMarker+=1;
-					result+=tempChar + ", ";
+					result+=tempChar + ",";
 					access.seek(currMarker);
 					break;
 			}	
 		}
 		
 		
-		result = result.trim().substring(0, result.length() - 2).trim();
+		result = result.substring(0, result.length() - 1);
 
 		
 		return result;
 	}
-
+	
+	/**
+	 * Basic toString
+	 */
 	public String toString() {
 		String result = "";
 		
@@ -349,6 +354,10 @@ public class Index {
 		return result;
 	}
 
+	/**
+	 * @throws IOException
+	 * Prints the first and last five entries, as well as the total entry count.
+	 */
 	public void firstLast() throws IOException {
 		
 		String temp;

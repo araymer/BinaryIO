@@ -43,17 +43,15 @@
 /**
  * !!!!!!!!GENERAL PROGRAM FLOW!!!!!!!!!
  * 
- * 1- main calls a new BinaryIO object.
- * 2- BinaryIO calls a new Index object.
+ * 1- main calls a new Prog1 object.
+ * 2- Prog1 calls a new Index object.
  * 3- Index opens file, reads and parses, creates Entry objects which contains Field objects, then closes file
- * 4- BinaryIO calls method in Index reference to write binary file.
- * 5- Index writes and then closes file. Reopens file to prepare for searching.
+ * 4- Prog1 calls method in Index reference to write binary file.
+ * 5- Index writes and then closes file. Reopens file to prepare for searching and prints first/last entries.
  * 6- main now sits in loop awaiting input of object IDs.
  */
 
 import java.io.BufferedReader;			//For access to the BufferedReader
-import java.io.FileNotFoundException;	//For the construction of FileReader
-import java.io.FileReader;				//For access to FileReader
 import java.io.IOException;
 import java.io.InputStreamReader;
 
@@ -61,17 +59,16 @@ import java.io.InputStreamReader;
  * 
  * @author Aaron Raymer
  * 
- * @class BinaryIO Application's main class, which reads in a file and prints the first and last 5 entries along with a user-directed search.
+ * @class Prog1 Application's main class, which reads in a file and prints the first and last 5 entries along with a user-directed search.
  *
  */
-public class BinaryIO {
+public class Prog1 {
 	
-	private final static String origFilepath = "./spmcat.dat";		//the path of the original input file to be read
 	private final static String binaryFilepath  = "./binaryspmcat.txt";		//the path of the file we want to create
 	private Index index;	//Our index, everything is there. This class is a controller (so we don't clutter our main class)
 
 	
-	public BinaryIO(String readPath) {
+	public Prog1(String readPath) {
         		index = new Index(readPath);
 		index.writeBinaryFile(binaryFilepath);
 		index.prepareToReadBinary(binaryFilepath);
@@ -104,7 +101,7 @@ public class BinaryIO {
 		String readInput = "";
 		BufferedReader br;
 		
-		BinaryIO bin = new BinaryIO(args[0]);
+		Prog1 bin = new Prog1(args[0]);
 		
 		//print first & last 5 and linecount.
 		bin.firstLast();
