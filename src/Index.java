@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 import java.util.TreeMap;
 
 /**
@@ -31,7 +32,11 @@ public class Index {
 				
 	}
 	
-	
+	/**
+	 * sets the widths for the fields in the line according to the readme.
+	 * Using a switch is slow, but it's a bit more readable than initializing the entire array
+	 * with values.
+	 */
 	private void setWidths() {
 		for(int i = 0; i<widths.length; i++) {
 			switch(i) {
@@ -72,13 +77,13 @@ public class Index {
 
 
 
-	
+	/**
+	 * Reopens the file for read access.
+	 * @param path The path to the file to be read.
+	 */
 	public void prepareToReadBinary(String path) {
 		try {
 			access = new RandomAccessFile(new File(path), "r");
-			System.out.println("File sorted: " + verifyOrder());
-//			access.seek(0);
-			System.out.println(access.readInt());
 
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -87,6 +92,10 @@ public class Index {
 		}
 	}
 	
+	/**
+	 * 
+	 * @return getter for the index.
+	 */
 	public TreeMap<Integer, Entry> getIndex() {
 		return index;
 	}
@@ -109,6 +118,7 @@ public class Index {
 		Entry newEntry = null;
 		
 		try {
+			//Basic readLine loop.
 			while((stringToBeParsed = bufferIn.readLine()) != null) {
 				if(stringToBeParsed != null) {
 					newEntry = new Entry(stringToBeParsed, widths);
@@ -135,7 +145,7 @@ public class Index {
 	/**
 	 * @param path The path to the file that's to be written.
 	 * Writes the entire Index to a Binary File from beginning to end.
-	 * Guarantees sort order by default.
+	 * 
 	 * 
 	 */
 	public void writeBinaryFile(String path) {
@@ -168,26 +178,12 @@ public class Index {
 			
 	}
 	
-	
-//	/**
-//	 * debugging ignore
-//	 */
-//	public void verifyWidths() {
-//		String temp;
-//		int line = 0;
-//		for(Entry e : index.values()) {
-//			line++;
-//			System.out.println("Line number" + line);
-//			e.checkBytes();
-//			System.out.println("\n\n");
-//		}
-//	}
 	/**
 	 * 
 	 * @return
 	 * @throws IOException
 	 * 
-	 * Debugging method, ignore.
+	 * Debugging method, ignore. Just makes sure our file is sorted and our spacing is correct
 	 */
 	public boolean verifyOrder() throws IOException {
 		access.seek(0);
@@ -215,14 +211,135 @@ public class Index {
 	 * @return String The relevant entries written in ascii encoding, separated by commas.
 	 * Uses interpolation search algorithm (derivative of binary search) to find the relevant entry
 	 * by using seek(n). 
+	 * Pre-condition: input string can be parsed as standard integer. 
+	 * @throws IOException 
 	 */
-	public String find(String query) {
+	public String find(String query) throws IOException {
+		String result = null;
+		int target = Integer.parseInt(query);
+		int leftBound = 0;
+		int leftKey;
+		int midPoint;
+		double offset;
+		int probe;
+		int rightBound = entryCount-1;
+		int rightKey;
+		boolean success = false;
+		
+		//Setup our keys and first probe
+		access.seek(leftBound * 140);
+		leftKey = access.readInt();
+		access.seek(rightBound * 140);
+		rightKey = access.readInt();
+		offset = (target-leftKey);
+		offset /= (rightKey-leftKey);
+		offset *= (rightBound-leftBound) ;
+		midPoint = (int) ( leftBound + offset);
+		access.seek((int)midPoint * 140);
+		probe = access.readInt();
+		
+		//Begin searching.
+		while(leftBound < rightBound) {
+			
+			if(probe == target) {
+				success = true;
+				break;
+			} 
+			else if(probe < target) {
+				leftBound = (int) (midPoint + 1);
+			} else if(probe > target) {
+				rightBound = (int) (midPoint - 1);
+			}
+			offset = (target-leftKey);
+			offset /= (rightKey-leftKey);
+			offset *= (rightBound-leftBound) ;
+			midPoint = (int) ( leftBound + offset);
+			access.seek(leftBound * 140);
+			leftKey = access.readInt();
+			access.seek(rightBound * 140);
+			rightKey = access.readInt();
+			access.seek((int)midPoint * 140);
+			probe = access.readInt();
+		}
+		
+		if(success) {
+			access.seek((int)midPoint*140);
+			return readFields(midPoint*140);
+		}
 		
 		
-		
-		return "";
+		return null;
 	}
 	
+	/**
+	 * 
+	 * @param marker The offset to the beginning of the entry.
+	 * @return String of concatenated fields that have been translated from binary.
+	 * @throws IOException
+	 */
+	private String readFields(int marker) throws IOException {
+		String result = "";
+		int currMarker = marker;
+		Integer tempInt;
+		Double tempDbl;
+		char tempChar;
+		for(int i = 0; i<27; i++) {
+			int size = 0;
+			switch(i) {
+				case 0:
+				case 1:
+				case 2:	
+				case 5:
+				case 6:
+				case 10:
+				case 11:
+				case 19:
+				case 20:
+				case 21:
+				case 22:
+				case 23:
+					tempInt = access.readInt();
+					currMarker+=4;
+					result+=tempInt + ", ";
+					access.seek(currMarker);
+					break;
+					
+				case 3:
+				case 7:
+				case 8:
+				case 9:
+				case 12:
+				case 13:
+				case 14:
+				case 15:
+				case 16:
+				case 17:
+				case 18: 
+					tempDbl = access.readDouble();
+					currMarker+=8;
+					result+=tempDbl + ", ";
+					access.seek(currMarker);
+					break;
+				
+				case 4:
+				case 24:
+				case 25:
+				case 26: 
+					tempChar = (char) access.readByte();
+					currMarker+=1;
+					result+=tempChar + ", ";
+					access.seek(currMarker);
+					break;
+			}	
+		}
+		
+		
+		result = result.trim().substring(0, result.length() - 2).trim();
+
+		
+		return result;
+	}
+
 	public String toString() {
 		String result = "";
 		
@@ -230,5 +347,25 @@ public class Index {
 			result+=e.toString() + ", ";
 		}
 		return result;
+	}
+
+	public void firstLast() throws IOException {
+		
+		String temp;
+		System.out.println("First five entries: ");
+		System.out.println(readFields(0));
+		System.out.println(readFields(1*140));
+		System.out.println(readFields(2*140));
+		System.out.println(readFields(3*140));
+		System.out.println(readFields(4*140));
+		System.out.println(" \nLast five entries:");
+		System.out.println(readFields( (entryCount-5)*140) );
+		System.out.println(readFields( (entryCount-4)*140) );
+		System.out.println(readFields( (entryCount-3)*140) );
+		System.out.println(readFields( (entryCount-2)*140) );
+		System.out.println(readFields( (entryCount-1)*140) );
+		
+		System.out.println("\nTotal entries: " + entryCount);
+		
 	}
 }

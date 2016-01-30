@@ -40,6 +40,10 @@ public class Entry implements Comparable {
 			str.push(temp);
 			temp = null;
 		}
+		//Reversing the list. Ended up in reverse due to pushing, 
+		//and I fought with ordering on a tangentially related problem.
+		//So, I didn't wanna change the ordering in the previous loop.
+		//Will probably factor out this loop if time permits.
 		LinkedList<String> reversed = new LinkedList<String>();
 		for(String s : str) {
 			reversed.push(s);
@@ -50,6 +54,7 @@ public class Entry implements Comparable {
 		Integer tempInteger = null;
 		
 		//divvy up the strings into fields.
+		//Again, switch statement is ugly, but it's a bit more readable, I think.
 		for(int i = 0; i<27; i++) {
 			int size = 0;
 			switch(i) {
@@ -96,34 +101,9 @@ public class Entry implements Comparable {
 					break;
 			}	
 		}
-		objectId = (int) fields[0].getValue();
+		objectId = (int) fields[0].getValue();  //We use the objectId in the comparable override for Entry.
 	}
 
-	/**
-	 * @param string String to check for numeric digits
-	 * @return if no numeric digits exist, return true. Otherwise, false.
-	 */
-	private boolean isAlpha(String string) {
-		if(string == null)
-			return false;
-		return !string.matches("[0-9]+");
-		
-	}
-	
-	public void checkBytes() {
-		int bytecount= 0;
-		for(Field f : fields) {
-			if(f.getValue() instanceof java.lang.Integer) {
-				bytecount+=4;
-			} else if(f.getValue() instanceof java.lang.Double) {
-				bytecount+=8;
-			} else {
-				bytecount++;
-			}
-		}
-		System.out.println("byte count: " + bytecount);
-	}
-	
 	/**
 	 * toString()
 	 */

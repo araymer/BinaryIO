@@ -39,6 +39,18 @@
  |
  *===========================================================================*/
 
+
+/**
+ * !!!!!!!!GENERAL PROGRAM FLOW!!!!!!!!!
+ * 
+ * 1- main calls a new BinaryIO object.
+ * 2- BinaryIO calls a new Index object.
+ * 3- Index opens file, reads and parses, creates Entry objects which contains Field objects, then closes file
+ * 4- BinaryIO calls method in Index reference to write binary file.
+ * 5- Index writes and then closes file. Reopens file to prepare for searching.
+ * 6- main now sits in loop awaiting input of object IDs.
+ */
+
 import java.io.BufferedReader;			//For access to the BufferedReader
 import java.io.FileNotFoundException;	//For the construction of FileReader
 import java.io.FileReader;				//For access to FileReader
@@ -74,7 +86,12 @@ public class BinaryIO {
 	 * Finds a record in the Binary File and returns it.
 	 */
 	public String find(String query) {
-		return index.find(query);
+		try {
+			return index.find(query);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 
@@ -89,6 +106,9 @@ public class BinaryIO {
 		
 		BinaryIO bin = new BinaryIO(args[0]);
 		
+		//print first & last 5 and linecount.
+		bin.firstLast();
+		
 		//loop to take in user-supplied arguments & find.
 		while(true) {
 			System.out.println("Please enter an Object Identifier to query or enter 'q' to quit:");
@@ -100,6 +120,7 @@ public class BinaryIO {
 			}
 			if(readInput.compareTo("q") == 0)
 				break;
+
 			System.out.println(bin.find(readInput));
 		}
 		
@@ -113,5 +134,16 @@ public class BinaryIO {
 		}
 		
 
+	}
+
+
+
+	private void firstLast() {
+		try {
+			index.firstLast();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }
